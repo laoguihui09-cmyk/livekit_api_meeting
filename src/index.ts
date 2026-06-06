@@ -22,7 +22,7 @@ try {
   const dbPass = Buffer.from('QVZOU19QYy04eHFkNjB5THNIS0gzYQ==', 'base64').toString();
   const dbPort = '25060';
   const dbName = 'defaultdb';
-  const databaseUrl = `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`;
+  const databaseUrl = `postgresql://${dbUser}:${encodeURIComponent(dbPass)}@${dbHost}:${dbPort}/${dbName}?sslmode=require`;
   initDatabase(databaseUrl);
   console.log('数据库已连接');
 
