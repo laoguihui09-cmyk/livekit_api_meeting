@@ -19,7 +19,7 @@ app.use(express.json());
 try {
   const dbHost = 'sgp1-52774-do-user-38187578-0.k.db.ondigitalocean.com';
   const dbUser = 'doadmin';
-  const dbPass = Buffer.from('QVZOU19QYy04eHFkNjB5THNIS0gzYQ==', 'base64').toString();
+  const dbPass = Buffer.from('QVZOU19QYy04eHFkNm95THNIdEtIM2FK', 'base64').toString();
   const dbPort = '25060';
   const dbName = 'defaultdb';
   const databaseUrl = `postgresql://${dbUser}:${encodeURIComponent(dbPass)}@${dbHost}:${dbPort}/${dbName}?sslmode=require`;
