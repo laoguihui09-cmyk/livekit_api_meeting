@@ -30,7 +30,11 @@ export function cacheDel(key: string): void {
 
 // ====== 数据库连接 ======
 export function initDatabase(connectionString: string): Pool {
-  pool = new Pool({ connectionString, max: 20 });
+  pool = new Pool({
+    connectionString,
+    max: 20,
+    ssl: { rejectUnauthorized: false }
+  });
   pool.on('error', (err) => {
     console.error('数据库连接池异常:', err.message);
   });
