@@ -19,11 +19,18 @@ try {
   initDatabase(databaseUrl);
   console.log('数据库已连接');
 
+  const livekitHost = process.env.LIVEKIT_HOST?.trim() || '';
+  const isInvalidHost = !livekitHost || livekitHost.startsWith('postgresql://') || livekitHost.startsWith('postgres://');
+  
   const primary = {
-    host: requireEnv('LIVEKIT_HOST'),
+    host: isInvalidHost ? 'wss://livekit.tookiuy.top/' : livekitHost,
     apiKey: requireEnv('LIVEKIT_API_KEY'),
     apiSecret: requireEnv('LIVEKIT_API_SECRET'),
   };
+  
+  if (isInvalidHost) {
+    console.warn(`LIVEKIT_HOST 环境变量无效 (${livekitHost})，使用默认值: ${primary.host}`);
+  }
 
   const fallback = readOptionalServerConfig('LIVEKIT_CLOUD');
   const checkInterval = readIntEnv('HEALTH_CHECK_INTERVAL', 30000);
