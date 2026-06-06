@@ -104,8 +104,7 @@ export function createRouter(lkService: LiveKitService): Router {
 
       const { AccessToken } = await import('livekit-server-sdk');
       const lkStatus = lkService.getHealthStatus();
-      const isPrimary = lkStatus.activeServer === 'primary';
-      const primary = lkStatus.primary;
+      const host = lkStatus.activeServer === 'primary' ? lkStatus.primary.url : lkStatus.fallback.url;
       const apiKey = process.env.LIVEKIT_API_KEY?.trim() || '';
       const apiSecret = process.env.LIVEKIT_API_SECRET?.trim() || '';
       const at = new AccessToken(apiKey, apiSecret, {
