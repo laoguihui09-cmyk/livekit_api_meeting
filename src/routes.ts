@@ -134,27 +134,34 @@ export function createRouter(lkService: LiveKitService): Router {
         name?: string;
       };
 
-      if (!code || !room || !identity) {
-        res.status(400).json({ error: '缺少 code、room 或 identity' });
+      if (!room || !identity) {
+        res.status(400).json({ error: '缺少 room 或 identity' });
         return;
       }
 
-      const result = await inviteService.joinRoom({
-        code,
-        roomName: room,
-        identity,
-        name,
-      });
-
-      res.json({
-        serverUrl: result.url,
-        token: result.token,
-        participantToken: result.token,
-        server: 'primary',
-        code: code.trim().toUpperCase(),
-        roomName: result.roomName,
-        expiresAt: result.expiresAt ?? null,
-      });
+      // 有授权码则验证绑定，没有则直接发 token
+      if (code) {
+        const result = await inviteService.joinRoom({ code, roomName: room, identity, name });
+        res.json({
+          serverUrl: result.url,
+          token: result.token,
+          participantToken: result.token,
+          server: 'primary',
+          code: code.trim().toUpperCase(),
+          roomName: result.roomName,
+          expiresAt: result.expiresAt ?? null,
+        });
+      } else {
+        const { AccessToken } = await import('livekit-server-sdk');
+        const lkStatus = lkService.getHealthStatus();
+        const host = lkStatus.activeServer === 'primary' ? lkStatus.primary.url : lkStatus.fallback.url;
+        const apiKey = process.env.LIVEKIT_API_KEY?.trim() || '';
+        const apiSecret = process.env.LIVEKIT_API_SECRET?.trim() || '';
+        const at = new AccessToken(apiKey, apiSecret, { identity, name: name || identity });
+        at.addGrant({ roomJoin: true, canPublish: true, canSubscribe: true, room });
+        const token = await at.toJwt();
+        res.json({ serverUrl: host, token, participantToken: token, roomName: room });
+      }
     } catch (err) {
       const message = (err as Error).message;
       if (message.includes('无效') || message.includes('过期') || message.includes('绑定')) {
