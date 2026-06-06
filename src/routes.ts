@@ -88,6 +88,44 @@ export function createRouter(lkService: LiveKitService): Router {
 
   // ====== 公开会议接口（xinbotapi 兼容） ======
 
+  // 加入会议（无需授权码，只需房间号）
+  router.post('/room/join-direct', async (req: Request, res: Response) => {
+    try {
+      const { room, identity, name } = req.body as {
+        room?: string;
+        identity?: string;
+        name?: string;
+      };
+
+      if (!room || !identity) {
+        res.status(400).json({ error: '缺少 room 或 identity' });
+        return;
+      }
+
+      const { AccessToken } = await import('livekit-server-sdk');
+      const lkStatus = lkService.getHealthStatus();
+      const isPrimary = lkStatus.activeServer === 'primary';
+      const primary = lkStatus.primary;
+      const apiKey = process.env.LIVEKIT_API_KEY?.trim() || '';
+      const apiSecret = process.env.LIVEKIT_API_SECRET?.trim() || '';
+      const at = new AccessToken(apiKey, apiSecret, {
+        identity,
+        name: name || identity,
+      });
+      at.addGrant({ roomJoin: true, canPublish: true, canSubscribe: true, room });
+      const token = await at.toJwt();
+
+      res.json({
+        serverUrl: host,
+        token,
+        participantToken: token,
+        roomName: room,
+      });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
   router.post('/room/join', async (req: Request, res: Response) => {
     try {
       const { code, room, identity, name } = req.body as {
