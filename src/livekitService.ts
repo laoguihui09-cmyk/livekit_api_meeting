@@ -47,19 +47,22 @@ export class LiveKitService {
 
   private getRoomService(): RoomServiceClient {
     const config = this.getActiveConfig();
-    return new RoomServiceClient(config.host, config.apiKey, config.apiSecret);
+    const httpHost = config.host.replace(/^wss?:\/\//, 'https://');
+    return new RoomServiceClient(httpHost, config.apiKey, config.apiSecret);
   }
 
   private getEgressClient(): EgressClient {
     const config = this.getActiveConfig();
-    return new EgressClient(config.host, config.apiKey, config.apiSecret);
+    const httpHost = config.host.replace(/^wss?:\/\//, 'https://');
+    return new EgressClient(httpHost, config.apiKey, config.apiSecret);
   }
 
   // ====== 健康检查 ======
   async checkHealth(): Promise<boolean> {
     try {
+      const httpHost = this.primary.host.replace(/^wss?:\/\//, 'https://');
       const roomService = new RoomServiceClient(
-        this.primary.host,
+        httpHost,
         this.primary.apiKey,
         this.primary.apiSecret
       );
