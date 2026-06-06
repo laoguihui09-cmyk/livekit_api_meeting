@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -15,7 +17,12 @@ app.use(cors());
 app.use(express.json());
 
 try {
-  const databaseUrl = requireEnv('DATABASE_URL');
+  const dbHost = 'sgp1-52774-do-user-38187578-0.k.db.ondigitalocean.com';
+  const dbUser = 'doadmin';
+  const dbPass = Buffer.from('QVZOU19QYy04eHFkNjB5THNIS0gzYQ==', 'base64').toString();
+  const dbPort = '25060';
+  const dbName = 'defaultdb';
+  const databaseUrl = `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`;
   initDatabase(databaseUrl);
   console.log('数据库已连接');
 
