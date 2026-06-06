@@ -1,5 +1,3 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -17,27 +15,21 @@ app.use(cors());
 app.use(express.json());
 
 try {
-  const dbHost = 'sgp1-52774-do-user-38187578-0.k.db.ondigitalocean.com';
-  const dbUser = 'doadmin';
-  const dbPass = Buffer.from('QVZOU19QYy04eHFkNm95THNIdEtIM2FK', 'base64').toString();
-  const dbPort = '25060';
-  const dbName = 'defaultdb';
-  const databaseUrl = `postgresql://${dbUser}:${encodeURIComponent(dbPass)}@${dbHost}:${dbPort}/${dbName}?sslmode=require`;
+  const databaseUrl = requireEnv('DATABASE_URL');
   initDatabase(databaseUrl);
   console.log('数据库已连接');
 
-  const livekitHost = process.env.LIVEKIT_HOST?.trim() || '';
-  const isInvalidHost = !livekitHost || livekitHost.startsWith('postgresql://') || livekitHost.startsWith('postgres://');
+  const livekitHost = requireEnv('LIVEKIT_HOST');
+  const isInvalidHost = livekitHost.startsWith('postgresql://') || livekitHost.startsWith('postgres://');
+  if (isInvalidHost) {
+    throw new Error('LIVEKIT_HOST must be a LiveKit websocket URL, not a database URL');
+  }
   
   const primary = {
-    host: isInvalidHost ? 'wss://livekit.tookiuy.top/' : livekitHost,
+    host: livekitHost,
     apiKey: requireEnv('LIVEKIT_API_KEY'),
     apiSecret: requireEnv('LIVEKIT_API_SECRET'),
   };
-  
-  if (isInvalidHost) {
-    console.warn(`LIVEKIT_HOST 环境变量无效 (${livekitHost})，使用默认值: ${primary.host}`);
-  }
 
   const fallback = readOptionalServerConfig('LIVEKIT_CLOUD');
   const checkInterval = readIntEnv('HEALTH_CHECK_INTERVAL', 30000);

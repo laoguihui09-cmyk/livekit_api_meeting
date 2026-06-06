@@ -1,8 +1,8 @@
-import { Pool } from 'pg';
+﻿import { Pool } from 'pg';
 
 let pool: Pool;
 
-// ====== 内存缓存（替代 Redis） ======
+// ====== 鍐呭瓨缂撳瓨锛堟浛浠?Redis锛?======
 interface CacheEntry {
   data: any;
   expiry: number;
@@ -28,23 +28,30 @@ export function cacheDel(key: string): void {
   cacheStore.delete(key);
 }
 
-// ====== 数据库连接 ======
+// ====== 鏁版嵁搴撹繛鎺?======
+function normalizeDatabaseUrl(connectionString: string): string {
+  const url = new URL(connectionString);
+  if (url.searchParams.has('sslmode')) {
+    url.searchParams.set('sslmode', 'no-verify');
+  }
+  return url.toString();
+}
+
 export function initDatabase(connectionString: string): Pool {
   pool = new Pool({
-    connectionString,
+    connectionString: normalizeDatabaseUrl(connectionString),
     max: 20,
-    ssl: { rejectUnauthorized: false }
   });
   pool.on('error', (err) => {
-    console.error('数据库连接池异常:', err.message);
+    console.error('鏁版嵁搴撹繛鎺ユ睜寮傚父:', err.message);
   });
-  console.log('PostgreSQL 连接池已创建');
+  console.log('PostgreSQL 杩炴帴姹犲凡鍒涘缓');
   return pool;
 }
 
 export function getPool(): Pool {
   if (!pool) {
-    throw new Error('数据库未初始化，请先调用 initDatabase()');
+    throw new Error('鏁版嵁搴撴湭鍒濆鍖栵紝璇峰厛璋冪敤 initDatabase()');
   }
   return pool;
 }
