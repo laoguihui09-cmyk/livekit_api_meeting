@@ -106,8 +106,8 @@ export function createRouter(lkService: LiveKitService): Router {
       // 校验房间号是否在数据库中存在（必须是通过授权码创建的有效房间）
       const db = getPool();
       const roomCheck = await db.query(
-        `SELECT code FROM invite_codes WHERE bound_room = $1 LIMIT 1`,
-        [room]
+        `SELECT code FROM invite_codes WHERE room_name LIKE $1 AND (expires_at IS NULL OR expires_at > NOW()) LIMIT 1`,
+        [`%-${room}`]
       );
       if (roomCheck.rowCount === 0) {
         res.status(403).json({ error: '房间不存在或未授权，请确认房间号后重试' });
