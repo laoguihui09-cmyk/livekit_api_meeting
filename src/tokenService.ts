@@ -246,19 +246,8 @@ export class InviteService {
       }
       effectiveInvite = { ...invite, room_name: roomName, activated_at: activatedAt, expires_at: expiresAt };
     } else if (invite.room_name !== roomName) {
-      // 切换房间：释放旧房间，绑定新房间（不重置计时）
-      const result = await pool.query(
-        'UPDATE invite_codes SET room_name = $1 WHERE id = $2',
-        [roomName, invite.id],
-      );
-
-      if (result.rowCount === 0) {
-        throw new Error('切换房间失败');
-      }
-      effectiveInvite = { ...invite, room_name: roomName };
-
-      // 清除缓存（旧房间名已过时）
-      cacheDel(cacheKey);
+      // 授权码已绑定其他房间，拒绝创建新房间
+      throw new Error('该授权码已有会议进行中，不能同时开启两个会议');
     }
 
     // 生成 LiveKit Token
