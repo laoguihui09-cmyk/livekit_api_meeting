@@ -124,9 +124,9 @@ export class LiveKitService {
   async autoReleaseRooms(): Promise<number> {
     try {
       const rooms = await this.listRooms();
-      const activeRoomNames = rooms
-        .filter((room) => room.numParticipants > 0)
-        .map((room) => room.name);
+      // 只要房间在 LiveKit 上存在（不管有没有人）就保留绑定
+      // 只有 LiveKit 上彻底没有这个房间了才释放
+      const activeRoomNames = rooms.map((room) => room.name);
       const releasedCount = await this.inviteService.autoReleaseInactiveRooms(activeRoomNames);
       if (releasedCount > 0) {
         console.log(`[自动释放] 已自动释放 ${releasedCount} 个已结束会议的房间绑定`);
