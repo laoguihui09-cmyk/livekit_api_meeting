@@ -3,6 +3,7 @@ import { LiveKitService } from './livekitService';
 import { CreateInviteRequest, JoinRequest } from './models';
 import { requireEnv } from './env';
 import { createConsoleToken, isConsoleLoginConfigured, readBearerToken, verifyConsoleToken } from './consoleAuth';
+import { getPool } from './database';
 
 export function createRouter(lkService: LiveKitService): Router {
   const router = Router();
@@ -88,7 +89,7 @@ export function createRouter(lkService: LiveKitService): Router {
 
   // ====== 公开会议接口（xinbotapi 兼容） ======
 
-  // 加入会议（无需授权码，只需房间号）
+  // 加入会议（无需授权码，只需房间号，但房间号必须是后台已创建的）
   router.post('/room/join-direct', async (req: Request, res: Response) => {
     try {
       const { room, identity, name } = req.body as {
@@ -99,6 +100,17 @@ export function createRouter(lkService: LiveKitService): Router {
 
       if (!room || !identity) {
         res.status(400).json({ error: '缺少 room 或 identity' });
+        return;
+      }
+
+      // 校验房间号是否在数据库中存在（必须是通过授权码创建的有效房间）
+      const db = getPool();
+      const roomCheck = await db.query(
+        `SELECT code FROM invite_codes WHERE bound_room = $1 LIMIT 1`,
+        [room]
+      );
+      if (roomCheck.rowCount === 0) {
+        res.status(403).json({ error: '房间不存在或未授权，请确认房间号后重试' });
         return;
       }
 
